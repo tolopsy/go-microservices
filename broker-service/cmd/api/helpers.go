@@ -26,7 +26,7 @@ func (app *Config) readJson(w http.ResponseWriter, r *http.Request, data interfa
 
 	err = dec.Decode(&struct{}{})
 	if err != io.EOF {
-		return errors.New("Request body should consist of a single JSON value, not an array of values.")
+		return errors.New("request body should consist of a single JSON value, not an array of values")
 	}
 
 	return nil
