@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -38,7 +39,6 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
-
 	client = mongoClient
 
 }
@@ -46,8 +46,8 @@ func main() {
 func connectToMongo(username, password string) (*mongo.Client, error) {
 	clientOptions := options.Client().ApplyURI(mongoURL)
 	clientOptions.SetAuth(options.Credential{
-		Username: "admin",
-		Password: "password",
+		Username: username,
+		Password: password,
 	})
 
 	c, err := mongo.Connect(context.TODO(), clientOptions)
