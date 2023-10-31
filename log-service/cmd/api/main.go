@@ -41,6 +41,15 @@ func main() {
 	}
 	client = mongoClient
 
+	// create context to close connection
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	defer func() {
+		if err := client.Disconnect(ctx); err != nil {
+			panic(err)
+		}
+	}()
 }
 
 func connectToMongo(username, password string) (*mongo.Client, error) {
