@@ -3,4 +3,5 @@ workspace.code-workspace
 brokerApp
 frontApp
 authApp
+logApp
 infra/db-data
