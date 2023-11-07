@@ -9,7 +9,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -25,15 +24,6 @@ var client *mongo.Client
 
 type Config struct {
 	Models data.Models
-}
-
-func init() {
-	// load environment variables from .env file
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatalf("Error loading .env file")
-		os.Exit(1)
-	}
 }
 
 func main() {
@@ -98,12 +88,4 @@ func connectToMongo(username, password string) (*mongo.Client, error) {
 
 	log.Println("Connected to Mongo!")
 	return c, nil
-}
-
-func LoadEnv() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatalf("Error loading .env file")
-		os.Exit(1)
-	}
 }
