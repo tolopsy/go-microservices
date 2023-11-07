@@ -11,6 +11,7 @@ const webPort = "80"
 type Config struct {}
 
 func main() {
+	// TODO: To be used or removed
 	app := Config{}
 
 	log.Printf("Starting broker service on port %s\n", webPort)
