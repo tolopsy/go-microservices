@@ -4,4 +4,5 @@ brokerApp
 frontApp
 authApp
 logApp
+mailApp
 infra/db-data
