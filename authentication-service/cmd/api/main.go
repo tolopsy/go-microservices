@@ -16,7 +16,6 @@ import (
 )
 
 const webPort = "80"
-var counts int64
 
 type Config struct {
 	DB     *sql.DB
@@ -64,23 +63,24 @@ func openDB(dsn string) (*sql.DB, error) {
 
 func connectToDB() *sql.DB {
 	dsn := os.Getenv("DSN")
+	retryCounts := 0
+	maxRetries := 10
 
+	// Retry connecting to the database until successful or maximum retries are reached.
 	for {
 		connection, err := openDB(dsn)
-		if err != nil {
-			log.Println("Postgres not yet ready...")
-			counts++
-		} else {
+		if err == nil {
 			log.Println("Connected to Postgres!")
 			return connection
 		}
 
-		if counts > 10 {
+		retryCounts++
+		if retryCounts > maxRetries {
 			log.Println(err)
 			return nil
 		}
 
-		log.Println("Wait for 2 seconds")
+		log.Println("Postgres not yet ready. Retrying in 2 seconds...")
 		time.Sleep(2 * time.Second)
 		continue
 	}
