@@ -1,6 +1,7 @@
 package main
 
 import (
+	"listener-service/event"
 	"log"
 	"math"
 	"os"
@@ -18,9 +19,17 @@ func main() {
 	defer conn.Close()
 	log.Println("Connected to RabbitMQ")
 
-	// start listening for messages
 	// create consumer
+	consumer, err := event.NewConsumer(conn)
+	if err != nil {
+		panic(err)
+	}
+
 	// watch the queue and consume events
+	err = consumer.Listen([]string{"log.INFO", "log.WARNING", "log.ERROR"})
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 // Connecting to the RabbitMQ with exponential backoff retry until successful or maximum retries are reached.

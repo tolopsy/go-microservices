@@ -91,7 +91,8 @@ func (consumer *Consumer) Listen(topics []string) error {
 				continue // Skip this message and continue
 			}
 
-			go handlePayload(payload)
+			// TODO: Consider using worker pools to handle events
+			handlePayload(payload)
 		}
 	}()
 
