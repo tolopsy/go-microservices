@@ -10,7 +10,6 @@ import (
 
 type Consumer struct {
 	conn      *amqp.Connection
-	queueName string
 }
 
 func NewConsumer(conn *amqp.Connection) (Consumer, error) {
