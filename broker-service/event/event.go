@@ -4,11 +4,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 const EXCHANGE_NAME = "logs_topic"
+const publishTimeout = time.Second * 5
+
+type Payload struct {
+	Name string `json:"name"`
+	Data string `json:"data"`
+}
 
 func declareExchange(channel *amqp.Channel) error {
 	return channel.ExchangeDeclare(
