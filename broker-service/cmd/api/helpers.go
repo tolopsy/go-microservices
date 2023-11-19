@@ -1,6 +1,7 @@
 package main
 
 import (
+	"broker/event"
 	"encoding/json"
 	"errors"
 	"io"
@@ -66,4 +67,18 @@ func (app *Config) errorJson(w http.ResponseWriter, err error, status ...int) er
 	}
 
 	return app.writeJson(w, statusCode, payload)
+}
+
+func (app *Config) pushToQueue(payload LogPayload, severity string) error {
+	emitter, err := event.NewEventEmitter(app.amqpConn)
+	if err != nil {
+		return err
+	}
+
+	payload_json, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	return emitter.Push(string(payload_json), severity)
 }
