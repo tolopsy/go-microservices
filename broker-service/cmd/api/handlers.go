@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"net/rpc"
 )
 
 type RequestPayload struct {
@@ -31,6 +32,11 @@ type MailPayload struct {
 	Message string `json:"message"`
 }
 
+type RPCPayload struct {
+	Name string
+	Data string
+}
+
 func (app *Config) Broker(w http.ResponseWriter, r *http.Request) {
 	payload := jsonResponse{
 		Error:   false,
@@ -52,7 +58,11 @@ func (app *Config) HandleRequest(w http.ResponseWriter, r *http.Request) {
 	case "auth":
 		app.authenticate(w, requestPayload.Auth)
 	case "log":
-		app.logEventViaAMQP(w, requestPayload.Log)
+		app.logItem(w, requestPayload.Log)
+	case "logAMQP":
+		app.logItemViaAMQP(w, requestPayload.Log)
+	case "logRPC":
+		app.logItemViaRPC(w, requestPayload.Log)
 	case "mail":
 		app.sendMail(w, requestPayload.Mail)
 
@@ -171,7 +181,7 @@ func (app *Config) sendMail(w http.ResponseWriter, m MailPayload) {
 	app.writeJson(w, http.StatusAccepted, payload)
 }
 
-func (app *Config) logEventViaAMQP(w http.ResponseWriter, l LogPayload) {
+func (app *Config) logItemViaAMQP(w http.ResponseWriter, l LogPayload) {
 	err := app.pushToQueue(l, "log.INFO")
 	if err != nil {
 		app.errorJson(w, err)
@@ -184,4 +194,27 @@ func (app *Config) logEventViaAMQP(w http.ResponseWriter, l LogPayload) {
 	}
 
 	app.writeJson(w, http.StatusAccepted, payload)
+}
+
+func (app *Config) logItemViaRPC(w http.ResponseWriter, l LogPayload) {
+	client, err := rpc.Dial("tcp", "log-service:5001")
+	if err != nil {
+		app.errorJson(w, err)
+		return
+	}
+
+	rpcPayload := RPCPayload(l)
+
+	var result string
+	err = client.Call("RPCServer.LogInfo", rpcPayload, &result)
+	if err != nil {
+		app.errorJson(w, err)
+		return
+	}
+
+	responsePayload := jsonResponse{
+		Error: false,
+		Message: result,
+	}
+	app.writeJson(w, http.StatusAccepted, responsePayload)
 }
