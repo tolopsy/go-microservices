@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"log-service/data"
+	"net"
 	"net/http"
+	"net/rpc"
 	"os"
 	"time"
 
@@ -49,6 +51,18 @@ func main() {
 		Models: data.New(client),
 	}
 
+	err = rpc.Register(new(RPCServer))
+	if err != nil {
+		log.Println("Error while registering RPC Server:", err.Error())
+	} else {
+		go func(){
+			err := app.rpcListen()
+			if err != nil {
+				log.Println("RPC Listen Error:", err.Error())
+			}
+		}()
+	}
+	
 	log.Println("Starting log service at port", webPort)
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", webPort),
@@ -61,17 +75,22 @@ func main() {
 	}
 }
 
-// func (app *Config) serve() {
-// 	srv := &http.Server{
-// 		Addr:    fmt.Sprintf(":%s", webPort),
-// 		Handler: app.routes(),
-// 	}
+func (app *Config) rpcListen() error {
+	log.Println("Starting RPC server on port ", rpcPort)
+	listen, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%s", rpcPort))
+	if err != nil {
+		return err
+	}
+	defer listen.Close()
+	for {
+		rpcConn, err := listen.Accept()
+		if err != nil {
+			continue
+		}
 
-// 	err := srv.ListenAndServe()
-// 	if err != nil {
-// 		log.Panic(err)
-// 	}
-// }
+		go rpc.ServeConn(rpcConn)
+	}
+}
 
 func connectToMongo(username, password string) (*mongo.Client, error) {
 	clientOptions := options.Client().ApplyURI(mongoURL)

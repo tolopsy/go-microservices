@@ -14,12 +14,12 @@ func (app *Config) WriteLog(w http.ResponseWriter, r *http.Request) {
 	var requestPayload JSONPayload
 	_ = app.readJson(w, r, &requestPayload)
 
-	event := data.LogEntry{
+	entry := data.LogEntry{
 		Name: requestPayload.Name,
 		Data: requestPayload.Data,
 	}
 
-	err := event.Insert()
+	err := entry.Insert()
 	if err != nil {
 		app.errorJson(w, err)
 		return
