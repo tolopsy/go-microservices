@@ -1,11 +1,17 @@
 package main
 
 import (
+	"broker/proto"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"net/rpc"
+	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type RequestPayload struct {
@@ -59,10 +65,16 @@ func (app *Config) HandleRequest(w http.ResponseWriter, r *http.Request) {
 		app.authenticate(w, requestPayload.Auth)
 	case "log":
 		app.logItem(w, requestPayload.Log)
+
 	case "logAMQP":
 		app.logItemViaAMQP(w, requestPayload.Log)
+
 	case "logRPC":
 		app.logItemViaRPC(w, requestPayload.Log)
+
+	case "logGRPC":
+		app.logItemViaGRPC(w, requestPayload.Log)
+
 	case "mail":
 		app.sendMail(w, requestPayload.Mail)
 
@@ -189,7 +201,7 @@ func (app *Config) logItemViaAMQP(w http.ResponseWriter, l LogPayload) {
 	}
 
 	payload := jsonResponse{
-		Error: false,
+		Error:   false,
 		Message: "logged via AMQP (RabbitMQ)",
 	}
 
@@ -213,8 +225,41 @@ func (app *Config) logItemViaRPC(w http.ResponseWriter, l LogPayload) {
 	}
 
 	responsePayload := jsonResponse{
-		Error: false,
+		Error:   false,
 		Message: result,
 	}
 	app.writeJson(w, http.StatusAccepted, responsePayload)
+}
+
+func (app *Config) logItemViaGRPC(w http.ResponseWriter, l LogPayload) {
+	conn, err := grpc.Dial(
+		"log-service:50001",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithBlock(),
+	)
+	if err != nil {
+		app.errorJson(w, err)
+	}
+	defer conn.Close()
+
+	client := proto.NewLogServiceClient(conn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	logResponse, err := client.WriteLog(ctx, &proto.LogRequest{
+		LogEntry: &proto.Log{
+			Name: l.Name,
+			Data: l.Data,
+		},
+	})
+	if err != nil {
+		app.errorJson(w, err)
+	}
+
+	var payload = jsonResponse{
+		Error:   false,
+		Message: logResponse.GetResult(),
+	}
+	app.writeJson(w, http.StatusAccepted, payload)
 }
