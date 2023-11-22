@@ -50,6 +50,7 @@ func main() {
 	}
 
 	go app.rpcListen()
+	go app.grpcListen()
 
 	log.Println("Starting log service at port", webPort)
 	srv := &http.Server{
