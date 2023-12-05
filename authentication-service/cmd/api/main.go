@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"time"
@@ -12,7 +13,6 @@ import (
 	_ "github.com/jackc/pgconn"
 	_ "github.com/jackc/pgx/v4"
 	_ "github.com/jackc/pgx/v4/stdlib"
-
 )
 
 const webPort = "80"
@@ -33,7 +33,7 @@ func main() {
 
 	// set up config
 	app := Config{
-		DB: conn,
+		DB:     conn,
 		Models: data.New(conn),
 	}
 
@@ -63,7 +63,7 @@ func openDB(dsn string) (*sql.DB, error) {
 
 func connectToDB() *sql.DB {
 	dsn := os.Getenv("DSN")
-	retryCounts := 0
+	retryCount := 0
 	maxRetries := 10
 
 	// Retry connecting to the database until successful or maximum retries are reached.
@@ -74,14 +74,15 @@ func connectToDB() *sql.DB {
 			return connection
 		}
 
-		retryCounts++
-		if retryCounts > maxRetries {
+		retryCount++
+		if retryCount > maxRetries {
 			log.Println(err)
 			return nil
 		}
 
-		log.Println("Postgres not yet ready. Retrying in 2 seconds...")
-		time.Sleep(2 * time.Second)
+		backoff := time.Duration(math.Pow(float64(retryCount), 2)) * time.Second
+		log.Printf("Backing off! Retrying in %s", backoff)
+		time.Sleep(backoff)
 		continue
 	}
 }
