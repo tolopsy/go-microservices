@@ -3,6 +3,14 @@
 version: '3'
 
 services:
+  frontend:
+    image: iamtoluwaa/microservice-frontend:1.0.0
+    ports:
+      - "8081:80"
+    deploy:
+      mode: replicated
+      replicas: 1
+
   broker-service:
     image: iamtoluwaa/broker-service:1.0.0
     ports:

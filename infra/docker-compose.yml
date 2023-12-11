@@ -2,6 +2,16 @@ version: '3.8'
 
 services:
 
+  frontend:
+    build:
+      context: ./../front-end
+      dockerfile: ./../front-end/frontend.dockerfile
+    ports:
+      - "8081:80"
+    deploy:
+      mode: replicated
+      replicas: 1
+
   broker-service:
     build:
       context: ./../broker-service
